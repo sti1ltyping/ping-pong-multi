@@ -8,7 +8,7 @@ win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Client - Player 2")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(("192.168.x.x", 9999)) # Local host IP
+client.connect(("192.168.x.x", 9999)) # Your loacal server IP
 
 clock = pygame.time.Clock()
 p1 = Paddle(30)
@@ -56,7 +56,7 @@ while run:
         p2.rect.bottom = HEIGHT
 
     try:
-        client.sendall(str(p2.rect.y).encode())
+        client.sendall(f"{p2.rect.y}\n".encode())
     except Exception as e:
         print(f"Error sending data: {e}")
         break

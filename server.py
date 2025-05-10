@@ -51,20 +51,26 @@ def draw_game():
 
 def recv_data():
     global running
-    while True:
+    buffer = ""
+    while running:
         try:
             data = conn.recv(1024).decode()
             if not data:
-                print("[ERROR] Disconnected from client.")
+                print("[ERROR] Client disconnected.")
                 running = False
                 break
-            p2.rect.y = int(data)
-            # Debug received data
-            print(f"[INFO] Received paddle y: {p2.rect.y}")
+
+            buffer += data
+            while "\n" in buffer:
+                line, buffer = buffer.split("\n", 1)
+                p2.rect.y = int(line.strip())
+                print(f"[INFO] Received paddle y: {p2.rect.y}")
+
         except Exception as e:
             print(f"[ERROR] recv_data thread crashed: {e}")
             running = False
             break
+
 
 running = True
 game_started = False
