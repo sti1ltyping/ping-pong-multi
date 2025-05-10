@@ -28,7 +28,7 @@ score2 = 0
 def wait_for_connection():
     global conn, addr, connected
     conn, addr = server.accept()
-    print(f"Connected to {addr}")
+    print(f"[INFO] Connected to {addr}")
     connected = True
 
 threading.Thread(target=wait_for_connection, daemon=True).start()
@@ -50,11 +50,20 @@ def draw_game():
     pygame.display.update()
 
 def recv_data():
+    global running
     while True:
         try:
             data = conn.recv(1024).decode()
+            if not data:
+                print("[ERROR] Disconnected from client.")
+                running = False
+                break
             p2.rect.y = int(data)
-        except:
+            # Debug received data
+            print(f"[INFO] Received paddle y: {p2.rect.y}")
+        except Exception as e:
+            print(f"[ERROR] recv_data thread crashed: {e}")
+            running = False
             break
 
 running = True
@@ -75,6 +84,7 @@ while running:
         threading.Thread(target=recv_data, daemon=True).start()
         game_started = True
 
+    # Player 1 paddle control
     mouse_y = pygame.mouse.get_pos()[1]
     p1.rect.y = mouse_y - p1.rect.height // 2
 
@@ -83,6 +93,7 @@ while running:
     elif p1.rect.bottom > HEIGHT:
         p1.rect.bottom = HEIGHT
 
+    # Ball logic
     ball.move()
 
     if ball.rect.colliderect(p1.rect) and ball.vx < 0:
@@ -103,13 +114,16 @@ while running:
         ball.reset()
 
     try:
-        conn.sendall(f"{p1.rect.y}|{ball.rect.x},{ball.rect.y}|{score1},{score2}".encode())
-    except:
+        message = f"{p1.rect.y}|{ball.rect.x},{ball.rect.y}|{score1},{score2}"
+        conn.sendall(message.encode())
+        print(f"[INFO] Sent: {message}")
+    except Exception as e:
+        print(f"[ERROR] Failed to send data: {e}")
+        running = False
         break
 
     draw_game()
 
 pygame.quit()
-
 if conn:
     conn.close()

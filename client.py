@@ -8,7 +8,7 @@ win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Client - Player 2")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(("Your Local Host", 9999)) # input
+client.connect(("192.168.x.x", 9999)) # Local host IP
 
 clock = pygame.time.Clock()
 p1 = Paddle(30)
@@ -24,6 +24,9 @@ def recv_data():
     while True:
         try:
             data = client.recv(1024).decode()
+            if not data:
+                break
+
             paddle_y, ball_pos, score_str = data.split("|")
             p1.rect.y = int(paddle_y)
 
@@ -31,7 +34,8 @@ def recv_data():
             ball.rect.x, ball.rect.y = bx, by
 
             score1, score2 = map(int, score_str.split(","))
-        except:
+        except Exception as e:
+            print(f"Error receiving data: {e}")
             break
 
 threading.Thread(target=recv_data, daemon=True).start()
@@ -53,7 +57,8 @@ while run:
 
     try:
         client.sendall(str(p2.rect.y).encode())
-    except:
+    except Exception as e:
+        print(f"Error sending data: {e}")
         break
 
     win.fill(BLACK)
