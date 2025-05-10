@@ -5,7 +5,7 @@ PADDLE_WIDTH, PADDLE_HEIGHT = 10, 100
 BALL_SIZE = 15
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-FPS = 120
+FPS = 60
 
 class Paddle:
     def __init__(self, x):
