@@ -90,7 +90,6 @@ while running:
         threading.Thread(target=recv_data, daemon=True).start()
         game_started = True
 
-    # Player 1 paddle control
     mouse_y = pygame.mouse.get_pos()[1]
     p1.rect.y = mouse_y - p1.rect.height // 2
 
@@ -99,7 +98,6 @@ while running:
     elif p1.rect.bottom > HEIGHT:
         p1.rect.bottom = HEIGHT
 
-    # Ball logic
     ball.move()
 
     if ball.rect.colliderect(p1.rect) and ball.vx < 0:
@@ -120,7 +118,7 @@ while running:
         ball.reset()
 
     try:
-        message = f"{p1.rect.y}|{ball.rect.x},{ball.rect.y}|{score1},{score2}"
+        message = f"{p1.rect.y}|{ball.rect.x},{ball.rect.y}|{score1},{score2}\n"
         conn.sendall(message.encode())
         print(f"[INFO] Sent: {message}")
     except Exception as e:
