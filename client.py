@@ -8,7 +8,7 @@ win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Client - Player 2")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(("192.168.x.x", 9999)) # Your loacal server IP
+client.connect(("192.168.x.x", 9999))  # Local host IP
 
 clock = pygame.time.Clock()
 p1 = Paddle(30)
@@ -20,32 +20,46 @@ score2 = 0
 font = pygame.font.SysFont("Arial", 32)
 
 def recv_data():
-    global score1, score2
-    while True:
+    global score1, score2, running
+    buffer = ""
+    while running:
         try:
             data = client.recv(1024).decode()
             if not data:
+                print("[ERROR] Server disconnected.")
+                running = False
                 break
 
-            paddle_y, ball_pos, score_str = data.split("|")
-            p1.rect.y = int(paddle_y)
+            buffer += data
+            while "\n" in buffer:
+                line, buffer = buffer.split("\n", 1)
+                paddle_y, ball_pos, score_str = line.strip().split("|")
 
-            bx, by = map(int, ball_pos.split(","))
-            ball.rect.x, ball.rect.y = bx, by
+                p1.rect.y = int(paddle_y)
 
-            score1, score2 = map(int, score_str.split(","))
+                bx, by = map(int, ball_pos.split(","))
+                ball.rect.x, ball.rect.y = bx, by
+
+                score1, score2 = map(int, score_str.split(","))
         except Exception as e:
-            print(f"Error receiving data: {e}")
+            print(f"[ERROR] recv_data thread crashed: {e}")
+            running = False
             break
 
+def send_data():
+    try:
+        client.sendall(f"{p2.rect.y}\n".encode())
+    except Exception as e:
+        print(f"[ERROR] Failed to send: {e}")
+
+running = True
 threading.Thread(target=recv_data, daemon=True).start()
 
-run = True
-while run:
+while running:
     clock.tick(FPS)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            running = False
 
     mouse_y = pygame.mouse.get_pos()[1]
     p2.rect.y = mouse_y - p2.rect.height // 2
@@ -55,11 +69,7 @@ while run:
     elif p2.rect.bottom > HEIGHT:
         p2.rect.bottom = HEIGHT
 
-    try:
-        client.sendall(f"{p2.rect.y}\n".encode())
-    except Exception as e:
-        print(f"Error sending data: {e}")
-        break
+    send_data()
 
     win.fill(BLACK)
     pygame.draw.rect(win, WHITE, p1.rect)
