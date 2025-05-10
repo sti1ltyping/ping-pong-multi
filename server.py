@@ -24,9 +24,6 @@ connected = False
 
 score1 = 0
 score2 = 0
-FPS = 60
-
-MAX_SPEED = 15
 
 def wait_for_connection():
     global conn, addr, connected
@@ -92,35 +89,23 @@ while running:
 
     mouse_y = pygame.mouse.get_pos()[1]
     p1.rect.y = mouse_y - p1.rect.height // 2
+    p1.rect.clamp_ip(pygame.Rect(0, 0, WIDTH, HEIGHT))
 
-    if p1.rect.top < 0:
-        p1.rect.top = 0
-    elif p1.rect.bottom > HEIGHT:
-        p1.rect.bottom = HEIGHT
+    ball.rect.x += ball.vx
+    ball.rect.y += ball.vy
 
-    next_rect = ball.rect.move(ball.vx, ball.vy)
+    if ball.rect.top <= 0 or ball.rect.bottom >= HEIGHT:
+        ball.vy = -ball.vy
+        ball.rect.y += ball.vy
 
-    if next_rect.colliderect(p1.rect) and ball.vx < 0:
+    if ball.rect.colliderect(p1.rect) and ball.vx < 0:
         ball.vx = -ball.vx
         ball.combo_hits += 1
-        if abs(ball.vx) < MAX_SPEED:
-            ball.increase_speed()
-
-    elif next_rect.colliderect(p2.rect) and ball.vx > 0:
+        ball.increase_speed()
+    if ball.rect.colliderect(p2.rect) and ball.vx > 0:
         ball.vx = -ball.vx
         ball.combo_hits += 1
-        if abs(ball.vx) < MAX_SPEED:
-            ball.increase_speed()
-
-    ball.move()
-
-    # Wall collision handling
-    if ball.rect.top <= 0:
-        ball.rect.top = 0
-        ball.vy = -ball.vy
-    elif ball.rect.bottom >= HEIGHT:
-        ball.rect.bottom = HEIGHT
-        ball.vy = -ball.vy
+        ball.increase_speed()
 
     if ball.rect.left <= 0:
         score2 += 1
