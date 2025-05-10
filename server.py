@@ -24,6 +24,9 @@ connected = False
 
 score1 = 0
 score2 = 0
+FPS = 60
+
+MAX_SPEED = 15
 
 def wait_for_connection():
     global conn, addr, connected
@@ -64,13 +67,10 @@ def recv_data():
             while "\n" in buffer:
                 line, buffer = buffer.split("\n", 1)
                 p2.rect.y = int(line.strip())
-                print(f"[INFO] Received paddle y: {p2.rect.y}")
-
         except Exception as e:
             print(f"[ERROR] recv_data thread crashed: {e}")
             running = False
             break
-
 
 running = True
 game_started = False
@@ -98,17 +98,29 @@ while running:
     elif p1.rect.bottom > HEIGHT:
         p1.rect.bottom = HEIGHT
 
+    next_rect = ball.rect.move(ball.vx, ball.vy)
+
+    if next_rect.colliderect(p1.rect) and ball.vx < 0:
+        ball.vx = -ball.vx
+        ball.combo_hits += 1
+        if abs(ball.vx) < MAX_SPEED:
+            ball.increase_speed()
+
+    elif next_rect.colliderect(p2.rect) and ball.vx > 0:
+        ball.vx = -ball.vx
+        ball.combo_hits += 1
+        if abs(ball.vx) < MAX_SPEED:
+            ball.increase_speed()
+
     ball.move()
 
-    if ball.rect.colliderect(p1.rect) and ball.vx < 0:
-        ball.vx = -ball.vx
-        ball.combo_hits += 1
-        ball.increase_speed()
-
-    if ball.rect.colliderect(p2.rect) and ball.vx > 0:
-        ball.vx = -ball.vx
-        ball.combo_hits += 1
-        ball.increase_speed()
+    # Wall collision handling
+    if ball.rect.top <= 0:
+        ball.rect.top = 0
+        ball.vy = -ball.vy
+    elif ball.rect.bottom >= HEIGHT:
+        ball.rect.bottom = HEIGHT
+        ball.vy = -ball.vy
 
     if ball.rect.left <= 0:
         score2 += 1
@@ -120,7 +132,6 @@ while running:
     try:
         message = f"{p1.rect.y}|{ball.rect.x},{ball.rect.y}|{score1},{score2}\n"
         conn.sendall(message.encode())
-        print(f"[INFO] Sent: {message}")
     except Exception as e:
         print(f"[ERROR] Failed to send data: {e}")
         running = False
