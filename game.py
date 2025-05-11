@@ -34,8 +34,14 @@ class Ball:
         self.rect.x += self.vx
         self.rect.y += self.vy
 
-        if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
+        if self.rect.top <= 0:
+            self.rect.top = 0
             self.vy = -self.vy
+
+        elif self.rect.bottom >= HEIGHT:
+            self.rect.bottom = HEIGHT
+            self.vy = -self.vy
+
 
     def increase_speed(self):
         if self.combo_hits < 3:
